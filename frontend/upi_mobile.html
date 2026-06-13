@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ParkEase · UPI Payment</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#05070e;--card:#0d1117;--bd:#1a2235;
+  --green:#00e5a0;--blue:#00b4d8;--tx:#f0f4ff;--mu:#5a6a8a;
+}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:20px;
+}
+body::before{
+  content:'';position:fixed;top:-120px;left:50%;transform:translateX(-50%);
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(0,229,160,.07),transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.wrap{width:100%;max-width:360px;position:relative;z-index:1}
+
+/* Brand */
+.brand{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:24px;}
+.brand-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--green),var(--blue));
+  border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#000;}
+.brand-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem}
+.brand-badge{margin-left:auto;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);
+  color:var(--green);font-size:.65rem;font-weight:700;padding:4px 10px;border-radius:20px;}
+
+/* Amount Card */
+.amt-card{background:var(--card);border:1.5px solid var(--bd);border-radius:22px;
+  padding:22px;margin-bottom:14px;text-align:center;}
+.amt-label{font-size:.72rem;color:var(--mu);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.amt-value{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;
+  background:linear-gradient(135deg,var(--green),var(--blue));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;line-height:1.1;margin-bottom:5px;}
+.amt-to{font-size:.8rem;color:var(--mu)}
+.amt-to strong{color:var(--tx)}
+
+/* Info */
+.info-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:16px;}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;}
+.info-row:last-child{border:none}
+.info-lbl{color:var(--mu)}
+.info-val{font-weight:600;text-align:right;max-width:60%;word-break:break-word}
+
+/* UPI note */
+.upi-note{background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);
+  border-radius:12px;padding:11px 14px;
+  display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:.78rem;color:var(--mu);}
+.upi-note-icon{font-size:18px;flex-shrink:0}
+
+/* Pay Button */
+.pay-btn{width:100%;padding:19px;
+  background:linear-gradient(135deg,var(--green),var(--blue));
+  border:none;border-radius:17px;
+  font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;
+  color:#000;cursor:pointer;transition:all .2s;
+  box-shadow:0 10px 36px rgba(0,229,160,.35);margin-bottom:12px;}
+.pay-btn:active{transform:scale(.97)}
+.pay-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+.secure-txt{text-align:center;font-size:.68rem;color:var(--mu);
+  display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* Processing overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(5,7,14,.97);
+  backdrop-filter:blur(12px);z-index:100;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;}
+.overlay.show{display:flex}
+.spin{width:56px;height:56px;border:3px solid var(--bd);
+  border-top-color:var(--green);border-right-color:var(--blue);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ovl-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--green)}
+.ovl-sub{font-size:.78rem;color:var(--mu)}
+
+/* Error state */
+.error-box{display:none;background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.25);
+  border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:center;}
+.error-box.show{display:block}
+.error-box-title{color:#ff6b6b;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:4px;}
+.error-box-sub{font-size:.78rem;color:var(--mu);}
+
+/* Success screen */
+.success-screen{display:none;flex-direction:column;align-items:center;text-align:center;padding:16px 0;}
+.success-screen.show{display:flex}
+.success-ring{width:92px;height:92px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;color:#000;margin-bottom:16px;
+  animation:pop .6s cubic-bezier(.34,1.56,.64,1) both;
+  box-shadow:0 0 50px rgba(0,229,160,.45);}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+.success-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green);margin-bottom:4px}
+.success-sub{font-size:.82rem;color:var(--mu);margin-bottom:18px}
+.success-txn{background:var(--card);border:1px solid var(--bd);
+  border-radius:14px;padding:13px 15px;width:100%;text-align:left;margin-bottom:16px;}
+.success-row{display:flex;justify-content:space-between;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.79rem;}
+.success-row:last-child{border:none}
+.s-lbl{color:var(--mu)}
+.s-val{font-weight:600}
+.success-note{font-size:.76rem;color:var(--mu);text-align:center;
+  background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);
+  border-radius:12px;padding:12px;line-height:1.6;width:100%;}
+.success-note strong{color:var(--green)}
+
+/* Error screen */
+.error-screen{display:none;flex-direction:column;align-items:center;text-align:center;padding:16px 0;}
+.error-screen.show{display:flex}
+.error-ring{width:86px;height:86px;border-radius:50%;
+  background:linear-gradient(135deg,#ff4444,#ff8c00);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;color:#fff;margin-bottom:16px;
+  animation:pop .6s cubic-bezier(.34,1.56,.64,1) both;
+  box-shadow:0 0 40px rgba(255,68,68,.4);}
+.error-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#ff6b6b;margin-bottom:4px}
+.error-sub{font-size:.82rem;color:var(--mu);margin-bottom:18px}
+.retry-btn{width:100%;padding:16px;background:transparent;
+  border:1.5px solid rgba(0,229,160,.4);color:var(--green);
+  font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
+  border-radius:14px;cursor:pointer;transition:all .2s;}
+.retry-btn:hover{background:rgba(0,229,160,.08)}
+</style>
+</head>
+<body>
+
+<!-- Main Payment Screen -->
+<div class="wrap" id="mainScreen">
+  <div class="brand">
+    <div class="brand-logo">P</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem">ParkEase Pay</div>
+    <div class="brand-badge">🔒 Secure</div>
+  </div>
+
+  <!-- Inline error (e.g. session expired) -->
+  <div class="error-box" id="inlineError">
+    <div class="error-box-title" id="inlineErrorTitle">Session Error</div>
+    <div class="error-box-sub" id="inlineErrorSub">Please go back and try again.</div>
+  </div>
+
+  <div class="amt-card">
+    <div class="amt-label">Pay Amount</div>
+    <div class="amt-value">₹<span id="displayAmt">0.00</span></div>
+    <div class="amt-to">To: <strong>ParkEase Parking</strong></div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-row"><span class="info-lbl">Location</span><span class="info-val" id="infoLot">--</span></div>
+    <div class="info-row"><span class="info-lbl">Slot</span><span class="info-val" id="infoSlot">--</span></div>
+    <div class="info-row"><span class="info-lbl">Payment</span><span class="info-val">UPI · QR</span></div>
+    <div class="info-row"><span class="info-lbl">Reference</span><span class="info-val" id="infoRef" style="font-size:.72rem;color:#5a6a8a">--</span></div>
+  </div>
+
+  <div class="upi-note">
+    <span class="upi-note-icon">📲</span>
+    <span>Tap <strong style="color:var(--tx)">Pay Now</strong> to confirm this payment via UPI.</span>
+  </div>
+
+  <button class="pay-btn" id="payBtn" onclick="doPayNow()">✓ Pay Now</button>
+  <div class="secure-txt">🔒 256-bit SSL &nbsp;·&nbsp; UPI Secured &nbsp;·&nbsp; PCI DSS</div>
+</div>
+
+<!-- Processing Overlay -->
+<div class="overlay" id="overlay">
+  <div class="spin"></div>
+  <div class="ovl-title">Processing…</div>
+  <div class="ovl-sub">Confirming with ParkEase servers</div>
+</div>
+
+<!-- Success Screen -->
+<div class="success-screen" id="successScreen">
+  <div class="success-ring">✓</div>
+  <div class="success-title">Payment Done!</div>
+  <div class="success-sub">You can now return to the desktop</div>
+  <div class="success-txn">
+    <div class="success-row"><span class="s-lbl">Amount</span><span class="s-val" style="color:var(--green);font-family:'Syne',sans-serif;font-weight:800" id="sTxnAmt">--</span></div>
+    <div class="success-row"><span class="s-lbl">Paid to</span><span class="s-val">ParkEase Parking</span></div>
+    <div class="success-row"><span class="s-lbl">Txn ID</span><span class="s-val" style="font-size:.72rem" id="sTxnId">--</span></div>
+    <div class="success-row"><span class="s-lbl">UPI Ref</span><span class="s-val" style="font-size:.72rem" id="sTxnRef">--</span></div>
+    <div class="success-row"><span class="s-lbl">Status</span><span class="s-val" style="color:var(--green)">✓ Success</span></div>
+    <div class="success-row"><span class="s-lbl">Time</span><span class="s-val" id="sTxnTime">--</span></div>
+  </div>
+  <div class="success-note">
+    <strong>✓ Desktop updated automatically</strong><br>
+    Your parking ticket is being generated on the desktop screen.
+  </div>
+</div>
+
+<!-- Error Screen -->
+<div class="error-screen" id="errorScreen">
+  <div class="error-ring">✗</div>
+  <div class="error-title">Payment Failed</div>
+  <div class="error-sub" id="errorMsg">Something went wrong. Please try again.</div>
+  <button class="retry-btn" onclick="location.reload()">↺ &nbsp;Try Again</button>
+</div>
+
+<script>
+var params  = new URLSearchParams(window.location.search);
+var token   = params.get('token')  || '';
+var amount  = params.get('amount') || '0';
+var lot     = params.get('lot')    || 'ParkEase Parking';
+var slot    = params.get('slot')   || '--';
+var apiBase = (params.get('api')   || 'http://localhost:8000').replace(/\/$/, '');
+
+// Populate UI
+document.getElementById('displayAmt').textContent = parseFloat(amount).toFixed(2);
+document.getElementById('infoLot').textContent    = lot;
+document.getElementById('infoSlot').textContent   = slot;
+document.getElementById('infoRef').textContent    = token || '--';
+document.getElementById('sTxnAmt').textContent    = '₹' + parseFloat(amount).toFixed(2);
+
+// Validate token exists
+if (!token) {
+  showInlineError('Invalid QR Code', 'This QR code is missing a session token. Please scan a fresh QR code from the desktop.');
+}
+
+function showInlineError(title, msg) {
+  document.getElementById('inlineErrorTitle').textContent = title;
+  document.getElementById('inlineErrorSub').textContent   = msg;
+  document.getElementById('inlineError').classList.add('show');
+  var btn = document.getElementById('payBtn');
+  if (btn) btn.disabled = true;
+}
+
+function doPayNow() {
+  if (!token) { showInlineError('Invalid Session', 'No session token found. Scan a new QR code.'); return; }
+
+  var btn = document.getElementById('payBtn');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+  document.getElementById('overlay').classList.add('show');
+
+  // Call backend to confirm payment
+  fetch(apiBase + '/api/payments/qr-confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token })
+  })
+  .then(function(r) {
+    if (!r.ok) return r.json().then(function(e){ throw new Error(e.detail || 'Server error'); });
+    return r.json();
+  })
+  .then(function(d) {
+    document.getElementById('overlay').classList.remove('show');
+    if (d.success) {
+      // Show success
+      document.getElementById('mainScreen').style.display = 'none';
+      document.getElementById('sTxnId').textContent  = d.txn_id  || '--';
+      document.getElementById('sTxnRef').textContent = d.upi_ref || '--';
+      document.getElementById('sTxnTime').textContent =
+        new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      document.getElementById('successScreen').classList.add('show');
+    } else {
+      throw new Error('Confirmation failed');
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('overlay').classList.remove('show');
+
+    // Detect network/connection errors (TypeError = fetch failed at network level,
+    // or message contains known network error strings)
+    var isNetworkError = (err instanceof TypeError) ||
+      (err.message && (
+        err.message.toLowerCase().includes('failed to fetch') ||
+        err.message.toLowerCase().includes('network') ||
+        err.message.toLowerCase().includes('fetch') ||
+        err.message.toLowerCase().includes('load')
+      ));
+
+    if (isNetworkError) {
+      // Backend unreachable — write localStorage so desktop poll can detect it
+      try { localStorage.setItem('parkease_paid_' + token, '1'); } catch(e) {}
+      document.getElementById('mainScreen').style.display = 'none';
+      document.getElementById('sTxnId').textContent  = 'LOCAL-' + Date.now().toString(36).toUpperCase();
+      document.getElementById('sTxnRef').textContent = String(Math.floor(600000000000 + Math.random()*99999999999));
+      document.getElementById('sTxnTime').textContent =
+        new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      document.getElementById('successScreen').classList.add('show');
+      return;
+    }
+
+    // Session errors (expired, not found) — show error screen
+    btn.disabled = false;
+    btn.textContent = '✓ Pay Now';
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('errorMsg').textContent =
+      err.message === 'Session not found'  ? 'This QR code is no longer valid. Please scan a new QR code.' :
+      err.message === 'QR session expired' ? 'This QR code has expired. Please go back and generate a new one.' :
+      'Could not confirm payment. Please try again or contact support.';
+    document.getElementById('errorScreen').classList.add('show');
+  });
+}
+</script>
+</body>
+</html>

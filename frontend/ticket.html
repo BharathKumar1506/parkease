@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>ParkEase Ticket</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#05070e;--card:#0d1117;--bd:#1a2235;--green:#00e5a0;--blue:#00b4d8;--red:#ff4d6d;--tx:#f0f4ff;--mu:#5a6a8a;--yw:#ffd60a;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:40px;}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(ellipse at 60% 20%,rgba(0,229,160,.07) 0%,transparent 50%),
+             radial-gradient(ellipse at 20% 80%,rgba(0,180,216,.05) 0%,transparent 50%);
+  pointer-events:none;z-index:0;}
+
+/* Header */
+.hdr{background:rgba(13,17,23,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);
+  padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--blue));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#000;flex-shrink:0;}
+.hdr-title{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;}
+.hdr-sub{font-size:.7rem;color:var(--mu);}
+.ver-badge{margin-left:auto;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);
+  color:var(--green);font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+
+/* Content */
+.content{padding:16px;max-width:420px;margin:0 auto;position:relative;z-index:1;}
+
+/* Status */
+.status{border-radius:14px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.status.active{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);}
+.status.expired{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);}
+.status.cancelled{background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.25);}
+.sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.active .sdot{background:var(--green);box-shadow:0 0 8px var(--green);}
+.expired .sdot{background:var(--red);}
+.cancelled .sdot{background:var(--yw);}
+.stxt{font-size:.82rem;font-weight:600;}
+.active .stxt{color:var(--green);}
+.expired .stxt{color:var(--red);}
+.cancelled .stxt{color:var(--yw);}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;overflow:hidden;margin-bottom:14px;}
+.card-top{padding:20px;background:linear-gradient(135deg,rgba(0,229,160,.05),rgba(0,180,216,.03));
+  border-bottom:1px dashed var(--bd);position:relative;}
+.lot-name{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:3px;}
+.lot-addr{font-size:.75rem;color:var(--mu);}
+.bid-tag{position:absolute;top:18px;right:16px;background:rgba(0,229,160,.1);
+  border:1px solid rgba(0,229,160,.25);border-radius:8px;padding:3px 9px;
+  font-family:'DM Mono',monospace;font-size:.65rem;color:var(--green);letter-spacing:1px;}
+
+/* Grid */
+.grid{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.gi-lbl{font-size:.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.gi-val{font-size:.88rem;font-weight:600;}
+.gi-val.g{color:var(--green);}
+.gi-val.b{color:var(--blue);}
+.gi-val.y{color:var(--yw);}
+
+/* Time card */
+.tc{margin:0 16px 16px;background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.15);
+  border-radius:14px;padding:14px 16px;}
+.trow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.trow+.trow{border-top:1px solid rgba(255,255,255,.04);}
+.tlbl{font-size:.72rem;color:var(--mu);}
+.tval{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500;}
+.dur{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:var(--green);}
+
+/* Vehicle */
+.veh{margin:0 16px 16px;background:rgba(255,255,255,.03);border:1px solid var(--bd);
+  border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+.vic{font-size:28px;}
+.vnum{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;letter-spacing:2px;}
+.vtype{font-size:.7rem;color:var(--mu);margin-top:2px;}
+
+/* Amount */
+.amt-card{margin:0 16px 16px;background:linear-gradient(135deg,rgba(0,229,160,.08),rgba(0,180,216,.05));
+  border:1px solid rgba(0,229,160,.2);border-radius:14px;padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;}
+.amt-lbl{font-size:.82rem;color:var(--mu);}
+.amt-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green);}
+
+/* User */
+.usr{padding:16px;}
+.urow{display:flex;justify-content:space-between;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;}
+.urow:last-child{border-bottom:none;}
+.ul{color:var(--mu);}
+.uv{font-weight:500;}
+
+/* Divider */
+hr.dash{border:none;border-top:1.5px dashed var(--bd);margin:0 16px;position:relative;}
+hr.dash::before{content:'✂';position:absolute;left:-10px;top:-9px;font-size:13px;color:var(--mu);}
+
+/* Loading / Error */
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:14px;text-align:center;padding:24px;}
+.spin{width:44px;height:44px;border:3px solid var(--bd);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-icon{font-size:52px;margin-bottom:8px;}
+.err-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--red);}
+.err-sub{font-size:.8rem;color:var(--mu);margin-top:6px;}
+
+/* Footer */
+.footer{text-align:center;font-size:.68rem;color:var(--mu);margin-top:4px;padding:0 16px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">P</div>
+  <div>
+    <div class="hdr-title">ParkEase Ticket</div>
+    <div class="hdr-sub">Digital Parking Pass</div>
+  </div>
+  <div class="ver-badge" id="verBadge" style="display:none">&#10003; Verified</div>
+</div>
+
+<div class="content">
+  <div class="center" id="loadBox">
+    <div class="spin"></div>
+    <div style="color:var(--mu);font-size:.85rem">Loading ticket...</div>
+  </div>
+  <div class="center" id="errBox" style="display:none">
+    <div class="err-icon">&#10060;</div>
+    <div class="err-title">Ticket Not Found</div>
+    <div class="err-sub">This QR code is invalid or expired.<br>Please scan again or contact support.</div>
+  </div>
+  <div id="ticketBox" style="display:none">
+
+    <div class="status" id="statusBanner">
+      <div class="sdot"></div>
+      <div class="stxt" id="statusTxt"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <div class="lot-name" id="tLot"></div>
+        <div class="lot-addr" id="tAddr"></div>
+        <div class="bid-tag" id="tBid"></div>
+      </div>
+      <div class="grid">
+        <div><div class="gi-lbl">Floor</div><div class="gi-val b" id="tFloor"></div></div>
+        <div><div class="gi-lbl">Slot</div><div class="gi-val g" id="tSlot"></div></div>
+        <div><div class="gi-lbl">Date</div><div class="gi-val" id="tDate"></div></div>
+        <div><div class="gi-lbl">Payment</div><div class="gi-val y" id="tPay"></div></div>
+      </div>
+      <hr class="dash">
+      <div style="height:16px"></div>
+      <div class="tc">
+        <div class="trow"><span class="tlbl">&#128336; Entry</span><span class="tval" id="tEntry"></span></div>
+        <div class="trow"><span class="tlbl">&#128337; Exit</span><span class="tval" id="tExit"></span></div>
+        <div class="trow"><span class="tlbl">Duration</span><span class="dur" id="tDur"></span></div>
+      </div>
+      <div class="veh">
+        <div class="vic" id="vIcon">&#128663;</div>
+        <div>
+          <div class="vnum" id="tVnum"></div>
+          <div class="vtype" id="tVtype"></div>
+        </div>
+      </div>
+      <div class="amt-card">
+        <div class="amt-lbl">Total Paid</div>
+        <div class="amt-val" id="tAmt"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="usr">
+        <div style="font-size:.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">Passenger</div>
+        <div class="urow"><span class="ul">Name</span><span class="uv" id="tName"></span></div>
+        <div class="urow"><span class="ul">Phone</span><span class="uv" id="tPhone"></span></div>
+        <div class="urow"><span class="ul">Booking ID</span><span class="uv" style="color:var(--green);font-family:'DM Mono',monospace;font-size:.75rem" id="tBid2"></span></div>
+      </div>
+    </div>
+
+    <div class="footer">&#128274; Verified by ParkEase &nbsp;|&nbsp; Show this at entrance</div>
+  </div>
+</div>
+
+<script>
+var API = 'http://localhost:8000';
+
+function show(id){ document.getElementById(id).style.display='block'; }
+function hide(id){ document.getElementById(id).style.display='none'; }
+
+function renderTicket(b) {
+  hide('loadBox');
+  show('ticketBox');
+  document.getElementById('verBadge').style.display='flex';
+
+  // Status
+  var st = b.status || 'active';
+  // Auto-detect expired
+  if (st === 'active' && b.exit && new Date(b.exit) < new Date()) st = 'expired';
+  var banner = document.getElementById('statusBanner');
+  banner.className = 'status ' + st;
+  document.getElementById('statusTxt').textContent =
+    st==='active' ? 'Booking Active — Valid Parking Pass' :
+    st==='expired'? 'Booking Expired' : 'Booking Cancelled';
+
+  // Lot
+  document.getElementById('tLot').textContent  = b.lot   || b.lot_name || '--';
+  document.getElementById('tAddr').textContent = b.addr  || b.lot_addr || '';
+  document.getElementById('tBid').textContent  = b.bid   || b.booking_id || '';
+  document.getElementById('tBid2').textContent = b.bid   || b.booking_id || '';
+  document.getElementById('tFloor').textContent= 'Floor '+(b.floor||'--');
+  document.getElementById('tSlot').textContent = b.slot  || b.slot_label || '--';
+  document.getElementById('tPay').textContent  = (b.pay  || b.payment_method || 'CARD').toUpperCase();
+
+  // Times - handle both ISO strings and plain formatted strings
+  var entryRaw = b.entry || b.entry_time || '';
+  var exitRaw  = b.exit  || b.exit_time  || '';
+  var entryDate = new Date(entryRaw);
+  var isISO = !isNaN(entryDate.getTime());
+  document.getElementById('tDate').textContent  = b.date || (isISO ? entryDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '--');
+  document.getElementById('tEntry').textContent = isISO ? entryDate.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : entryRaw;
+  var exitDate = new Date(exitRaw);
+  document.getElementById('tExit').textContent  = !isNaN(exitDate.getTime()) ? exitDate.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) : exitRaw;
+  var hrs = b.hours || (!isNaN(exitDate.getTime()) && isISO ? Math.round((exitDate-entryDate)/3600000) : '--');
+  document.getElementById('tDur').textContent   = typeof hrs==='number' ? hrs+' hour'+(hrs>1?'s':'') : hrs;
+
+  // Vehicle
+  var vt = b.vtype || b.vehicle_type || '4W';
+  document.getElementById('vIcon').textContent  = vt==='2W'?'\uD83D\uDEB2':'\uD83D\uDE97';
+  document.getElementById('tVnum').textContent  = b.vnum  || b.vehicle_number || '--';
+  document.getElementById('tVtype').textContent = vt + (b.vmodel||b.vehicle_model ? ' · '+(b.vmodel||b.vehicle_model) : '');
+
+  // Amount
+  var amt = b.amt || b.total_amount || 0;
+  document.getElementById('tAmt').textContent = '\u20B9' + amt;
+
+  // User
+  document.getElementById('tName').textContent  = b.name  || b.user_name  || '--';
+  document.getElementById('tPhone').textContent = b.phone || b.user_phone || '--';
+}
+
+// ── Read ticket data ──
+var params = new URLSearchParams(window.location.search);
+
+function tryDecode(str) {
+  // Try multiple decode strategies
+  var attempts = [
+    // Strategy 1: URL-safe base64 (- and _)
+    function() {
+      var b = str.replace(/-/g,'+').replace(/_/g,'/').replace(/ /g,'+');
+      while(b.length%4) b+='=';
+      return JSON.parse(decodeURIComponent(atob(b)));
+    },
+    // Strategy 2: Direct atob + decodeURIComponent
+    function() {
+      return JSON.parse(decodeURIComponent(atob(str)));
+    },
+    // Strategy 3: atob only (no URI encoding)
+    function() {
+      return JSON.parse(atob(str));
+    },
+    // Strategy 4: just parse as JSON directly
+    function() {
+      return JSON.parse(decodeURIComponent(str));
+    }
+  ];
+  for(var i=0;i<attempts.length;i++){
+    try{ return attempts[i](); }catch(e){ continue; }
+  }
+  throw new Error('All decode strategies failed');
+}
+
+function mapKeys(d) {
+  if(d.bid) return d; // already full keys
+  var vparts = (d.v||'4W').split(' ');
+  return {
+    bid:d.b||'--', lot:d.l||'--', addr:d.a||'',
+    slot:d.s||'--', floor:d.fl||'--', date:d.d||'--',
+    entry:d.en||'--', exit:d.ex||'--', amt:d.am||'0',
+    vtype:vparts[0]||'4W', vnum:vparts.slice(1).join(' ')||'--',
+    name:d.nm||'--', phone:d.ph||'--',
+    att:d.at||'--', maps:d.mp||'', status:d.status||'active'
+  };
+}
+
+var bidParam = params.get('bid') || params.get('id');
+var d = params.get('d');
+
+// Method 1: Individual URL params (new QR format - works on ANY device)
+if (params.get('l') && params.get('en')) {
+  hide('loadBox');
+  renderTicket({
+    bid:   params.get('bid') || '--',
+    lot:   params.get('l')   || '--',
+    addr:  params.get('a')   || '',
+    slot:  params.get('s')   || '--',
+    floor: params.get('fl')  || '--',
+    date:  params.get('d')   || '--',
+    entry: params.get('en')  || '--',
+    exit:  params.get('ex')  || '--',
+    amt:   params.get('am')  || '0',
+    name:  params.get('nm')  || '--',
+    phone: params.get('ph')  || '--',
+    vtype: (params.get('v')||'4W').split(' ')[0],
+    vnum:  (params.get('v')||'').split(' ').slice(1).join(' ') || '--',
+    status: 'active'
+  });
+}
+// Method 2: Booking ID - check localStorage then backend
+else if (bidParam) {
+  var localFound = null;
+  try {
+    var hist = JSON.parse(localStorage.getItem('pe_hist') || '[]');
+    for (var hi = 0; hi < hist.length; hi++) {
+      if (hist[hi].bid && hist[hi].bid.toUpperCase() === bidParam.toUpperCase()) {
+        localFound = hist[hi]; break;
+      }
+    }
+  } catch(e) {}
+  if (localFound) {
+    hide('loadBox'); renderTicket(localFound);
+  } else {
+    fetch(API + '/api/bookings/' + bidParam.toUpperCase())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        hide('loadBox');
+        if (data.success && data.booking) renderTicket(data.booking);
+        else show('errBox');
+      })
+      .catch(function() { hide('loadBox'); show('errBox'); });
+  }
+}
+// Method 3: Encoded data blob
+else if (d) {
+  try {
+    var decoded = mapKeys(tryDecode(d));
+    renderTicket(decoded);
+  } catch(e) {
+    hide('loadBox'); show('errBox');
+  }
+} else {
+  hide('loadBox'); show('errBox');
+}
+</script>
+</body>
+</html>

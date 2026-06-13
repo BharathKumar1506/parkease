@@ -387,7 +387,12 @@ select.inp{cursor:pointer}
 </div>
 
 <script>
-const API = 'http://localhost:8000';
+const API = (function() {
+  var loc = window.location;
+  if (loc.protocol === 'file:') return 'http://localhost:8000';            // opened from disk
+  if (loc.port === '5500' || loc.port === '5501') return 'http://' + loc.hostname + ':8000'; // Live Server dev
+  return loc.origin;  // served by backend (local :8000 OR deployed https)
+})();
 let TOKEN = '';
 let allBookings = [];
 let allLots = [];

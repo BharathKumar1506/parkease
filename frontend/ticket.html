@@ -181,7 +181,12 @@ hr.dash::before{content:'✂';position:absolute;left:-10px;top:-9px;font-size:13
 </div>
 
 <script>
-var API = 'http://localhost:8000';
+var API = (function() {
+  var loc = window.location;
+  if (loc.protocol === 'file:') return 'http://localhost:8000';
+  if (loc.port === '5500' || loc.port === '5501') return 'http://' + loc.hostname + ':8000';
+  return loc.origin;
+})();
 
 function show(id){ document.getElementById(id).style.display='block'; }
 function hide(id){ document.getElementById(id).style.display='none'; }

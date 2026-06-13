@@ -2,7 +2,12 @@
    ParkEase — Backend API Connector  v2.0  FIXED
    ===================================================== */
 
-const API = 'http://localhost:8000';
+const API = (function() {
+  var loc = window.location;
+  if (loc.protocol === 'file:') return 'http://localhost:8000';
+  if (loc.port === '5500' || loc.port === '5501') return 'http://' + loc.hostname + ':8000';
+  return loc.origin;
+})();
 
 /* ══ 1. processPayment — saves booking to MongoDB ══*/
 function processPayment() {

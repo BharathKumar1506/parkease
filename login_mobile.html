@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ParkEase Login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#05070e;--card:#0d1117;--bd:#1a2235;--green:#00e5a0;--blue:#00b4d8;--red:#ff4d6d;--tx:#f0f4ff;--mu:#5a6a8a}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+.hdr{background:rgba(13,17,23,.97);border-bottom:1px solid var(--bd);padding:14px 20px;display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;color:#000}
+.hdr h2{font-family:'Syne',sans-serif;font-size:.95rem}
+.hdr p{font-size:.7rem;color:var(--mu)}
+.wrap{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px;max-width:420px;margin:0 auto;width:100%}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:26px 22px}
+.title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:4px}
+.sub{font-size:.82rem;color:var(--mu);margin-bottom:20px}
+.phone-chip{display:inline-block;background:rgba(0,180,216,.1);border:1px solid rgba(0,180,216,.3);color:var(--blue);border-radius:20px;padding:5px 14px;font-size:.8rem;font-weight:600;margin-bottom:20px}
+label{display:block;font-size:.72rem;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.otp-inp{width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--bd);border-radius:12px;padding:16px;color:var(--tx);font-size:1.5rem;letter-spacing:10px;text-align:center;font-family:'DM Sans',sans-serif;outline:none}
+.otp-inp:focus{border-color:var(--green)}
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:14px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#000;cursor:pointer;margin-top:18px}
+.btn:disabled{opacity:.5}
+.msg{margin-top:14px;font-size:.85rem;text-align:center;min-height:20px}
+.ok-screen{display:none;flex-direction:column;align-items:center;text-align:center;padding:20px}
+.ok-screen.show{display:flex}
+.ok-ring{width:88px;height:88px;border-radius:50%;background:rgba(0,229,160,.1);border:3px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:18px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.ok-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--green);margin-bottom:8px}
+.ok-sub{font-size:.85rem;color:var(--mu);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">P</div>
+  <div><h2>ParkEase Login</h2><p>Verify on your phone</p></div>
+</div>
+
+<div class="wrap">
+  <div class="card" id="formCard">
+    <div class="title">Enter OTP</div>
+    <div class="sub">Type the 6-digit code shown on your computer screen to log in there.</div>
+    <div class="phone-chip" id="phoneChip">&#128241; --</div>
+    <label>6-Digit OTP</label>
+    <input class="otp-inp" id="otpInput" type="tel" maxlength="6" placeholder="------" inputmode="numeric">
+    <button class="btn" id="verifyBtn" onclick="doVerify()">Verify &amp; Log In</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="ok-screen" id="okScreen">
+    <div class="ok-ring">&#10003;</div>
+    <div class="ok-title">Logged In!</div>
+    <div class="ok-sub">Your computer is now logged in.<br>You can return to it — this page is done.</div>
+  </div>
+</div>
+
+<script>
+var params  = new URLSearchParams(window.location.search);
+var token   = params.get('token') || '';
+var apiBase = (params.get('api') || 'http://localhost:8000').replace(/\/$/, '');
+var phone   = params.get('phone') || '';
+
+if (phone) document.getElementById('phoneChip').innerHTML = '&#128241; ' + phone;
+if (!token) {
+  document.getElementById('msg').style.color = '#ff4d6d';
+  document.getElementById('msg').textContent = 'Invalid QR. Please scan again from the computer.';
+  document.getElementById('verifyBtn').disabled = true;
+}
+
+function doVerify() {
+  var otp = (document.getElementById('otpInput').value || '').replace(/\D/g, '');
+  var msg = document.getElementById('msg');
+  if (otp.length !== 6) { msg.style.color = '#ff4d6d'; msg.textContent = 'Enter the 6-digit OTP'; return; }
+  var btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  msg.textContent = '';
+
+  fetch(apiBase + '/api/auth/login-verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token, otp: otp })
+  })
+  .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+  .then(function(res){
+    btn.disabled = false; btn.textContent = 'Verify & Log In';
+    if (res.ok && res.d.success) {
+      document.getElementById('formCard').style.display = 'none';
+      document.getElementById('okScreen').classList.add('show');
+    } else {
+      msg.style.color = '#ff4d6d';
+      msg.textContent = res.d.detail || 'Verification failed';
+    }
+  })
+  .catch(function(){
+    btn.disabled = false; btn.textContent = 'Verify & Log In';
+    msg.style.color = '#ff4d6d';
+    msg.textContent = 'Cannot reach server. Check that your phone is on the same WiFi.';
+  });
+}
+</script>
+</body>
+</html>
